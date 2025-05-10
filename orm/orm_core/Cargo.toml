@@ -1,0 +1,10 @@
+[package]
+name = "orm_core"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+orm_derive = { path = "../orm_derive" }
+
+[lib]
+name = "orm_core"
