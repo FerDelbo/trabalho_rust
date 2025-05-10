@@ -1,0 +1,8 @@
+[package]
+name = "orm_test"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+orm_core = { path = "../orm_core" }
+orm_derive = { path = "../orm_derive" }
