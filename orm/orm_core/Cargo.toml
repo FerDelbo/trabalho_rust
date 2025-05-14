@@ -5,6 +5,10 @@ edition = "2024"
 
 [dependencies]
 orm_derive = { path = "../orm_derive" }
+tokio = { version = "1", features = ["full"] }
+scylla = "0.14.0"
+anyhow = "1.0"
+async-trait = "0.1.88"
 
 [lib]
 name = "orm_core"
