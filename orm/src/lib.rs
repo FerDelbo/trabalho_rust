@@ -1,59 +1,81 @@
-use anyhow::Ok;
-use scylla::{deserialize::{result, row}, transport::session, FromRow, SerializeRow, SerializeValue, Session, SessionBuilder, QueryResult};
+use anyhow::Result;
+use async_trait::async_trait;
+use scylla::{Session, QueryResult, SessionBuilder, FromRow};
+use scylla::serialize::row::SerializeRow;
 
 static CREATE_KEYSPACE: &str = r#"
 CREATE KEYSPACE IF NOT EXISTS teste
     WITH replication = {
-        'class': 'NetworkTopologyStrategy', 
-        'replication_factor' : 1
+        'class': 'NetworkTopologyStrategy',
+        'replication_factor': 1
     }
     AND durable_writes = true
 "#;
 
-pub trait Model {
+#[async_trait]
+pub trait Model: SerializeRow + Send + Sync {
+    fn table_name() -> &'static str;
+    fn data_fields() -> Vec<(&'static str, &'static str)>;
 
-    async fn create(&self, name_table: &str, session: Session) -> Result<QueryResult, anyhow::Error> {
-        let fields = Self::data_fields();
-    
-        // Mapeia os campos para tipos CQL
-        let mut fields_cql: Vec<String> = Vec::new();
-        for (i, (nome, tipo)) in fields.iter().enumerate() {
-            let cql_type = match *tipo {
-                "String" => "text",
-                "i32" => "int",
-                "i64" => "bigint",
-                "bool" => "boolean",
-                "f32" => "float",
-                "f64" => "double",
-                _ => "text", // fallback genérico
-            };
-    
-            fields_cql.push(format!("{} {}", nome, cql_type));
-        }
-    
-        // Adiciona a PRIMARY KEY (usamos o primeiro campo como chave primária)
-        if let Some((pk, _)) = fields.first() {
-            let fields_str = format!("{}, PRIMARY KEY ({})", fields_cql.join(", "), pk);
-            let query = format!("CREATE TABLE IF NOT EXISTS teste.{} ({})", name_table, fields_str);
-            println!("Query: {}", query);
-            let result = session.query_unpaged(query, ()).await?;
-            Ok(result)
-        } else {
-            Err(anyhow::anyhow!("Nenhum campo definido em data_fields()"))
-        }
-    }
-
-    async fn connect(&self, url: &str) -> Session {
+    async fn connect(url: &str) -> Result<Session> {
         let session = SessionBuilder::new()
             .known_node(url)
             .build()
-            .await
-            .expect("Connection Refused!");
-
-        session.query_unpaged(CREATE_KEYSPACE, ()).await;
-        session
+            .await?;
+        session.query_unpaged(CREATE_KEYSPACE, &[]).await?;
+        Ok(session)
     }
 
-    fn data_fields() ->  Vec<(&'static str, &'static str)>;
+    async fn create_table(session: &Session) -> Result<()> {
+        let fields = Self::data_fields();
 
+        let mut cql_fields: Vec<String> = fields
+            .iter()
+            .map(|(name, rust_type)| {
+                let cql_type = match *rust_type {
+                    "String" => "text",
+                    "i32" => "int",
+                    "i64" => "bigint",
+                    "bool" => "boolean",
+                    "f32" => "float",
+                    "f64" => "double",
+                    _ => "text",
+                };
+                format!("{} {}", name, cql_type)
+            })
+            .collect();
+
+        if let Some((pk, _)) = fields.first() {
+            cql_fields.push(format!("PRIMARY KEY ({})", pk));
+        }
+
+        let query = format!(
+            "CREATE TABLE IF NOT EXISTS teste.{} ({})",
+            Self::table_name(),
+            cql_fields.join(", ")
+        );
+
+        session.query_unpaged(query, &[]).await?;
+        Ok(())
+    }
+
+    async fn insert_row(&self, session: &Session) -> Result<QueryResult> {
+        let fields = Self::data_fields();
+        let field_names: Vec<&str> = fields.iter().map(|(name, _)| *name).collect();
+        let placeholders = vec!["?"; field_names.len()].join(", ");
+
+        let query = format!(
+            "INSERT INTO teste.{} ({}) VALUES ({})",
+            Self::table_name(),
+            field_names.join(", "),
+            placeholders
+        );
+
+        let result = session.query_unpaged(query, self).await?;
+        Ok(result)
+    }
+
+    // async fn find_by_id(&self, session: &Session, id: i32) -> Result<QueryResult> {
+    //     let template_query = "SELECT * FROM teste.pessoa; WHERE {}";
+    // }
 }

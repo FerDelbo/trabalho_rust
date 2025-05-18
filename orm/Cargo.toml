@@ -8,7 +8,4 @@ tokio = { version = "1", features = ["full"] }
 scylla = "0.14.0"
 anyhow = "1.0"
 async-trait = "0.1.88"
-orm_core = { version = "0.1.0", path = "orm_core" }
 
-[workspace]
-members = ["orm_core", "orm_derive", "orm_test"]
