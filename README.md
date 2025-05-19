@@ -4,9 +4,7 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
 # Ferramentas necessárias para execução do código
      - Docker:
         - Necessário para rodar a imagem do banco de dados do ScyllaDB;
-     - rustup:
-        - Necessário para instalar e gerenciar diferentes versões do compilador Rust;
-
+     
 # Requisitos para a execução do programa
     - Ligar a imagem do bando de dados para execução;
     - utilizar o IP da máquina atual;
