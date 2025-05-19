@@ -158,10 +158,10 @@ async fn main() -> anyhow::Result<()> {
     let session = Pessoa::connect("172.17.0.2:9042").await?;
     session.use_keyspace("teste", true).await?;
 
-    Pessoa::create_table(&session).await?;
+    // Pessoa::create_table(&session).await?;
 
     // Instanciou => já insere
-    let nova = Pessoa {
+    let mut nova = Pessoa {
         id: 1,
         nome: "Fernando".to_string(),
         idade: 21,
@@ -171,5 +171,18 @@ async fn main() -> anyhow::Result<()> {
    
     let _p = Pessoa::new(2, "Gabriel".to_string(), 22, &session).await?;
 
+    let rows = Pessoa::find_by_id(&session, 1).await?;
+    
+    for row in rows {
+        for (i, col) in row.columns.iter().enumerate() {
+            println!("{}: {:?}", i, col);
+        }
+    }
+    
+    nova.nome = "Joca".to_string();
+    nova.idade = 33;
+    nova.update_row(&session, &["id"]).await?;
+
+    println!("{:?}", nova);
     Ok(())
 }
