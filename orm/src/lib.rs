@@ -1,11 +1,8 @@
-use std::result;
-
 use anyhow::Result;
 use async_trait::async_trait;
-use scylla::{Session, QueryResult, SessionBuilder};
+use scylla::{Session, QueryResult, SessionBuilder, FromRow};
 use scylla::serialize::row::SerializeRow;
 use scylla::frame::response::result::Row;
-use scylla::frame::value::Value;
 
 static CREATE_KEYSPACE: &str = r#"
 CREATE KEYSPACE IF NOT EXISTS teste
@@ -16,32 +13,9 @@ CREATE KEYSPACE IF NOT EXISTS teste
     AND durable_writes = true
 "#;
 
-#[derive(Debug)]
-pub enum DataTypes {
-    Int(i32),
-    Float(f32),
-    Double(f64),
-    Text(String),
-    Bigint(i64),
-    Boolean(bool),
-}
-
-impl DataTypes {
-    pub fn as_value(&self) -> &dyn Value {
-        match self {
-            DataTypes::Int(i) => i,
-            DataTypes::Float(f) => f,
-            DataTypes::Double(d) => d,
-            DataTypes::Text(s) => s,
-            DataTypes::Bigint(i) => i,
-            DataTypes::Boolean(b) => b,
-        }
-    }
-}
-
 
 #[async_trait]
-pub trait Model: SerializeRow + Send + Sync {
+pub trait Model: SerializeRow + Send + Sync + FromRow{
     fn table_name() -> &'static str;
     fn data_fields() -> Vec<(&'static str, &'static str)>;
 
@@ -119,6 +93,7 @@ pub trait Model: SerializeRow + Send + Sync {
         Ok(rows)
     }
 
+
     async fn update_row(&self, session: &Session, primary_key_fields: &[&str]) -> Result<QueryResult> {
         let fields = Self::data_fields();
         
@@ -151,5 +126,20 @@ pub trait Model: SerializeRow + Send + Sync {
         Ok(result)
     }
     
-    
+    async fn delete_row(session: &Session, id: i32) -> Result<QueryResult> {
+        let pk = Self::data_fields()
+            .first()
+            .expect("No fields in data_fields")
+            .0;
+
+        let query = format!(
+            "DELETE FROM teste.{} WHERE {} = ?", 
+            Self::table_name(), 
+            pk
+        );
+
+        let result = session.query_unpaged(query, (id,)).await?;
+        Ok(result)
+    }
+
 }

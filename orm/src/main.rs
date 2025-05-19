@@ -121,7 +121,9 @@
 //     // Ok(())
 // // }
 
-use scylla::{FromRow, Session};
+use std::clone;
+
+use scylla::{FromRow, SerializeRow, Session};
 use orm::Model;
 
 #[derive(Debug, Clone, FromRow, scylla::SerializeRow)]
@@ -153,6 +155,34 @@ impl Pessoa {
     }
 }
 
+
+#[derive(Clone, FromRow, Debug, SerializeRow)]
+struct Cidade {
+    nome: String,
+    estado: String
+}
+
+impl Model for Cidade {
+    fn table_name() -> &'static str {
+        "Cidade"
+    }
+
+    fn data_fields() -> Vec<(&'static str, &'static str)> {
+        vec![
+            ("nome", "String"),
+            ("estado", "String"),
+        ]
+    }
+}
+
+impl Cidade {
+    pub async fn new(nome: String,  estado: String, session: &Session) -> anyhow::Result<Self> {
+        let cidade = Cidade {nome, estado };
+        cidade.insert_row(session).await?;
+        Ok(cidade)
+    }
+}
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     let session = Pessoa::connect("172.17.0.2:9042").await?;
@@ -179,10 +209,17 @@ async fn main() -> anyhow::Result<()> {
         }
     }
     
-    nova.nome = "Joca".to_string();
+    nova.nome = "Xina".to_string();
     nova.idade = 33;
     nova.update_row(&session, &["id"]).await?;
 
     println!("{:?}", nova);
+    let delete_result = Pessoa::delete_row(&session, 1).await?;
+    // println!("Deleted {} rows", delete_result.rows_num);
+
+    Cidade::create_table(&session).await?;
+    let cerquilho = Cidade::new("Cerquilho".to_string(), "São Paulo".to_string(), &session).await?;
+    println!("{:?}", cerquilho);
+    
     Ok(())
 }
