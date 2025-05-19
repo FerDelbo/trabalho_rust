@@ -24,8 +24,6 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
     como Diesel e SeaORM. Pelo fato do ScyllaDB ser uma linguagem NoSQL outras tipos de abordagem não são viavéis por serem SQL.
     Para construir uma conexão com o banco de dados construimos uma conexão manual com ele, e usamos comandos diretos como session.query() e .bind() manualmente para a execução de queries. Em contra partida o métodos Diesel e SeaORM utiliza url de conexão e é baseado em async com Database::connec (...) respectivamente, e ambos não são suportados pelo ScyllaDB, os outros métodos utilizam macros (insert_into, filter) e comandos em DSL (User::insert().exec), que são abordagens mais alto nível, seguro e genérico.
     
-    ![Tabela de comparações](/Capturar.PNG)
-
     ScyllaDB
         - Driver para bancos compatíveis com Apache Cassandra.
         - Otimizado para alta escalabilidade.
@@ -58,13 +56,16 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
 
 ```rust
     ScyllaDB
-    use scylla::{Session, SessionBuilder};
-    async fn connect() -> Result<Session, scylla::transport::errors::NewSessionError> {
-        SessionBuilder::new()
-            .known_node("127.0.0.1:9042")
+    async fn connect(url: &str) -> Result<Session> {
+        let session = SessionBuilder::new()
+            .known_node(url)
             .build()
-            .await
+            .await?;
+        session.query_unpaged(CREATE_KEYSPACE, &[]).await?;
+        Ok(session)
     }
+
+     let session = Pessoa::connect("172.17.0.2:9042").await?;
 
     Diesel
     diesel::pg::PgConnection::establish("postgres://user:pass@localhost/db")?;
