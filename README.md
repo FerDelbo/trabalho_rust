@@ -24,7 +24,7 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
     como Diesel e SeaORM. Pelo fato do ScyllaDB ser uma linguagem NoSQL outras tipos de abordagem não são viavéis por serem SQL.
     Para construir uma conexão com o banco de dados construimos uma conexão manual com ele, e usamos comandos diretos como session.query() e .bind() manualmente para a execução de queries. Em contra partida o métodos Diesel e SeaORM utiliza url de conexão e é baseado em async com Database::connec (...) respectivamente, e ambos não são suportados pelo ScyllaDB, os outros métodos utilizam macros (insert_into, filter) e comandos em DSL (User::insert().exec), que são abordagens mais alto nível, seguro e genérico.
     
-    ![Tabela de comparações](Capturar.PNG)
+    ![Tabela de comparações](/Capturar.PNG)
 
     ScyllaDB
         - Driver para bancos compatíveis com Apache Cassandra.
@@ -47,12 +47,16 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
         - APIs modernas (ex.: backends para aplicações web).
 
     Considerações:
-        ORMs (Diesel/SeaORM) são ideais para produtividade em aplicações com schemas bem definidos. NoSQL (Scylla) é indispensável para cenários de alta escalabilidade ou dados flexíveis. A escolha da ferramenta deve considerar:    
+        ORMs (Diesel/SeaORM) são ideais para produtividade em aplicações com schemas bem definidos. 
+        NoSQL (Scylla) é indispensável para cenários de alta escalabilidade ou dados flexíveis.
+        A escolha da ferramenta deve considerar:    
             - Natureza do projeto (SQL vs. NoSQL).   
             - Requisitos de performance.
             - Necessidade de assincronismo.
+            
+# Diferentes tipos de conexão com o banco de dados
 
-```rust - Diferentes tipos de conexão com o banco de dados
+```rust
     ScyllaDB
     use scylla::{Session, SessionBuilder};
     async fn connect() -> Result<Session, scylla::transport::errors::NewSessionError> {
