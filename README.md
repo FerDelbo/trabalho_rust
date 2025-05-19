@@ -11,9 +11,22 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
     - Ligar a imagem do bando de dados para execução;
     - utilizar o IP da máquina atual;
 
+# Instânciando um contêiner docker
+    $ docker run --name some-scylla --hostname some-scylla -d scylladb/scylla --smp 1
+    - Caso não exista, será realizado o download
+
+    $ docker exec -it some-scylla nodetool status
+    - Para verificar qual IP do docker
+
+    $ docker exec -it some-scylla cqlsh
+    - Para verificar porta de execução
+
+# Juntando contêiner docker com código Rust
+    - No arquivo main.rs alterar na função main o Ip de "connect"
+
 # Como compilar o código
-    - cargo build;
-    - cargo run;
+    $ cargo build;
+    $ cargo run;
 
 # Comparativo entre a abordagem adotada e soluções existentes na linguagem
     - ScyllaDB (NoSQL): Um banco de dados distribuído compatível com Apache Cassandra.
