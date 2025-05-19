@@ -10,7 +10,6 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
 # Requisitos para a execução do programa
     - Ligar a imagem do bando de dados para execução;
     - utilizar o IP da máquina atual;
-    - Verificar se é a porta 9042(padrão do ScyllaDB) configurada para uso;
 
 # Como compilar o código
     - cargo build;
@@ -25,7 +24,7 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
     como Diesel e SeaORM. Pelo fato do ScyllaDB ser uma linguagem NoSQL outras tipos de abordagem não são viavéis por serem SQL.
     Para construir uma conexão com o banco de dados construimos uma conexão manual com ele, e usamos comandos diretos como session.query() e .bind() manualmente para a execução de queries. Em contra partida o métodos Diesel e SeaORM utiliza url de conexão e é baseado em async com Database::connec (...) respectivamente, e ambos não são suportados pelo ScyllaDB, os outros métodos utilizam macros (insert_into, filter) e comandos em DSL (User::insert().exec), que são abordagens mais alto nível, seguro e genérico.
     
-    ![Tabela de comprações](Capturar.PNG)
+    ![Tabela de comparações](Capturar.PNG)
 
     ScyllaDB
         - Driver para bancos compatíveis com Apache Cassandra.
@@ -53,7 +52,7 @@ Criação de um Object Relational Mapping (ORM) com a linguagem de programação
             - Requisitos de performance.
             - Necessidade de assincronismo.
 
-```rust
+```rust - Diferentes tipos de conexão com o banco de dados
     ScyllaDB
     use scylla::{Session, SessionBuilder};
     async fn connect() -> Result<Session, scylla::transport::errors::NewSessionError> {
